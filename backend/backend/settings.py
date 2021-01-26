@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 from pathlib import Path
-
+import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -37,12 +37,18 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework.authtoken',
+    'corsheaders',
+    'apps.accounts',
+    'apps.repos'
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -73,14 +79,20 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
+import pymysql# 配置MySQL
+pymysql.install_as_MySQLdb()
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',   # 数据库引擎
+        'NAME': 'test',         # 你要存储数据的库名，事先要创建之
+        'USER': 'root',         # 数据库用户名
+        'PASSWORD': 'root',     # 密码
+        'HOST': 'localhost',    # 主机
+        'PORT': '3306',         # 数据库使用的端口
     }
 }
 
-
+AUTH_USER_MODEL = 'accounts.User'
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
 
@@ -118,3 +130,37 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+AUTHENTICATION_BACKENDS = [
+    "apps.accounts.utils.UserInfoModelBackend",
+]
+
+
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ORIGIN_WHITELIST = [
+    "http://localhost:8080",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000"
+]
+
+REST_FRAMEWORK = {
+    # 设置所有接口都需要被验证
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated', # 全局配置只有认证用户可以访问接口
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication', # session认证
+        'rest_framework.authentication.BasicAuthentication', # 基本认证
+    ),
+}
+
+import datetime
+JWT_AUTH = {
+    # 'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=3600*4), # days=7
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=7), # days=7
+    'JWT_RESPONSE_PAYLOAD_HANDLER': 'apps.accounts.utils.jwt_response_payload_handler',
+    'JWT_AUTH_HEADER_PREFIX': 'JWT',
+}

@@ -29,8 +29,36 @@ const routes = [
 ]
 
 
-export default new Router({
+const router = new Router({
   mode: 'history',
   base: process.env.BASE_URL,
   routes
 })
+// // 导航守卫
+router.beforeEach((to, from, next) => {
+  console.log("页面进来了");
+
+  // const user = JSON.parse(window.localStorage.getItem('user'));
+  // if (to.path !== '/login') {
+  //   if(user) {
+  //     next
+  //   } else {
+  //     next('/login')
+  //   }
+  // } else {
+  //   next()
+  // }
+  const user = JSON.parse(window.localStorage.getItem('user'));
+  if(to.path === '/login') {
+    next()
+  } else {
+    if(user) {
+      next()
+    } else {
+      next('/login')
+    }
+  }
+
+});
+
+export default router
